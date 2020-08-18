@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
@@ -14,7 +14,9 @@ namespace Get_WifiPasswords
 
             if (args.Length == 0)
             {
+                ChangeConsoleColour(2);
                 Console.WriteLine(@"Usage: .\Get-WifiPasswords.exe PID");
+                ChangeConsoleColour(4);
                 Environment.Exit(-1);
             }
 
@@ -26,11 +28,13 @@ namespace Get_WifiPasswords
             }
             else
             {
+                ChangeConsoleColour(2);
                 Console.WriteLine(@"Usage: .\Get-WifiPasswords.exe PID");
+                ChangeConsoleColour(4);
                 Environment.Exit(-1);
             }
 
-            Console.ForegroundColor = ConsoleColor.White;
+            ChangeConsoleColour(4);
 
         }
 
@@ -62,19 +66,18 @@ namespace Get_WifiPasswords
             XmlDocument xml = new XmlDocument();
             xml.Load(wifiProfile);
             XmlNodeList ssid = xml.GetElementsByTagName("name");
-            Console.ForegroundColor = ConsoleColor.Green;
+            ChangeConsoleColour(1);
             Console.WriteLine("\n[+] SSID: {0}", ssid[0].InnerText);
 
             XmlNodeList keyMaterial = xml.GetElementsByTagName("keyMaterial");
-            if (keyMaterial[0].InnerText.Equals(""))
+            try
             {
-                Console.WriteLine("[!] Password: Not found!");
+                Console.WriteLine("[+] Password: {0}", Decrypt(keyMaterial[0].InnerText));
             }
-            else
+            catch (Exception)
             {
-                Console.WriteLine("[+] Password: {0}\n", Decrypt(keyMaterial[0].InnerText));
+                Console.WriteLine("[+] Open Network - No Key Material Found!");
             }
-
         }
 
         public static string Decrypt(string encPassword)
@@ -91,12 +94,14 @@ namespace Get_WifiPasswords
 
         public static void GetSystemToken(int pid)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            ChangeConsoleColour(2);
             Console.WriteLine("\n[+] Attempting to impersonate token of PID: {0}", pid);
 
             if (!ImpersonateProcessToken(pid))
             {
+                ChangeConsoleColour(3);
                 Console.WriteLine("[!] Could not impersonate token! Exiting...");
+                ChangeConsoleColour(4);
                 Environment.Exit(-1);
             }
             else
@@ -104,7 +109,9 @@ namespace Get_WifiPasswords
                 Console.WriteLine("[+] Attempting to enable all privileges...");
                 if (!EnablePrivilege("SeIncreaseQuotaPrivilege"))
                 {
+                    ChangeConsoleColour(3);
                     Console.WriteLine("[!] Could not enable all privileges! Exiting...");
+                    ChangeConsoleColour(4);
                     Environment.Exit(-1);
                 }
                 else
@@ -116,5 +123,26 @@ namespace Get_WifiPasswords
 
         }
 
+        public static void ChangeConsoleColour(int statusCode)
+        {
+            switch (statusCode)
+            {
+                case 1:
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    break;
+                case 2:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+                case 3:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
+                case 4:
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+
+            }
+        }
+
     }
 }
+
